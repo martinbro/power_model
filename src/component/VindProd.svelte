@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { construct_svelte_component } from "svelte/internal";
+    // import { construct_svelte_component } from "svelte/internal";
     import type { Production } from "../interfaces/interface";
     import Hus from "./hus.svelte";
 
@@ -7,9 +7,9 @@
     let x = 580;
     let y = 530;
     // let sum = 0;
-    export let sum;
-    export let prod;
-    export let production:Production;
+    
+    // export let prod;
+    export let prod:Production;
     function getSum(p:Production):number {
         return Math.round(p.orc+p.sol+p.vind);
     }
@@ -77,12 +77,12 @@
     <g transform="translate(380 405) "><Hus/></g>
     <g transform="translate(545 390)"><Hus/></g>
     <g transform="translate(790 530)"><Hus/></g>
-    {#if prod>0 }
-    <text x="800" y="120" >Konsum: {getSum(production)}</text>
-    <text x="800" y="140" >Prod: {prod}</text>
+    {#if prod !=undefined }
+    <text x="800" y="140" >Prod: {getSum(prod)}</text>
+    <text x="800" y="160" >Konsum: </text>
     {:else}  
-    <text x="800" y="120" >Konsum: ----</text>
     <text x="800" y="140" >Prod: ----</text>
+    <text x="800" y="120" >Konsum: ----</text>
     {/if}
 </svg>
 
