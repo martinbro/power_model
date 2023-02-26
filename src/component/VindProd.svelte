@@ -1,24 +1,43 @@
 <script lang="ts">
     // import { construct_svelte_component } from "svelte/internal";
+    // import {  } from 'svelte/transition';
     import type { Production,Consumption } from "../interfaces/interface";
     import Hus from "./hus.svelte";
 
     let mode="fast";
+    
     let x = 580;
     let y = 530;
+    // let export = true;
     // let sum = 0;
     
     // export let prod;
     export let prod: Production;
     export let consum: Consumption;
+    function getMode(val:number) {
+        if(val >10000) return {speed:"fast"};
+        else if(val>5000) return {speed:"medium"};
+        else if(val>0) return {speed:"slow"};
+        else return {speed:"stoped"}
+    }
+    function getExport(prod, consum) {
+        // if (prod != undefined && consum != undefined) {
+            return Math.round(getSum(prod)-(consum.ConsumptionBolig+consum.ConsumptionErhverv)); 
+        // }else return 0;
+    }
     function getSum(p:Production):number {
         return Math.round(p.orc+p.sol+p.vind);
     }
     //Get specified amount of data from specified dataset
+    function getState(val:number) {
+        if(val >0) return {fill:"yellow",stroke:"green"};
+        else return {fill:"grey",stroke:"grey"};
+        
+    }
 
 </script>
 
-<svg width="900" height="700" style="background-color: aquamarine">
+<svg width="900" height="740" style="background-color: aquamarine">
     <g id="other">
         <path
             id="waterbody"
@@ -42,69 +61,105 @@
     <g transform="translate(550 470)">
         <polygon
             points="50 160 55 180 70 180 60 190 65 205 50 195 35 205 40 190 30 180 45 180"
-            stroke="green"
-            fill="yellow"
+            stroke={getState(prod.vind).stroke}
+            fill={getState(prod.vind).fill}
             stroke-width="5"
         />
         <text x="17" y="220" >Vindenergi</text>
+        <text x="26" y="240" >{Math.round(prod.vind)}kW</text>
     </g>
     <g transform="translate(740 460) ">
         <polygon transform="scale(0.50)"
             points="50 160 55 180 70 180 60 190 65 205 50 195 35 205 40 190 30 180 45 180"
-            stroke="green"
-            fill="yellow"
+            stroke={getState(prod.orc).stroke}
+            fill={getState(prod.orc).fill}
             stroke-width="5"
         />
         <text x="10" y="120" >ORC</text>
-    </g>
-    <g transform="translate(390 385) ">
-        <polygon transform="scale(0.50)"
-            points="50 160 55 180 70 180 60 190 65 205 50 195 35 205 40 190 30 180 45 180"
-            stroke="green"
-            fill="yellow"
-            stroke-width="5"
-        />
-        <text x="-5" y="120" >Solenergi</text>
+        <text x="7" y="140" >{Math.round(prod.orc)}kW</text>
     </g>
     
-    <path id="vindprod" class="path {mode}" d="M {x} {y}  L600 650 "/>
-    <path id="orc" class=" path slow" d="M {x} {y}  L750 550"/>
-    <path id="sol" class=" path slow" d="M {x} {y}  L430 480"/>
-    <path id="soeby" class="consumepath slow" d="M200 170 L400 400  L{x} {y}"/>
+        <g transform="translate(390 385) ">
+            <polygon transform="scale(0.50)"
+                points="50 160 55 180 70 180 60 190 65 205 50 195 35 205 40 190 30 180 45 180"
+                stroke={getState(prod.sol).stroke}
+                fill={getState(prod.sol).fill}
+                stroke-width="5"
+            />
+            <text x="-7" y="120" >Solenergi </text>
+            <text x="2" y="140" >{Math.round(prod.sol)}kW</text>
+        </g>
+    <path id="vindprod" class="path {getMode(prod.vind).speed}" d="M {x} {y}  L600 650 "/>
+    <path id="orc" class=" path {getMode(prod.orc).speed}" d="M {x} {y}  L750 550"/>
+    <path id="sol" class=" path {getMode(prod.sol).speed}" d="M {x} {y}  L430 480"/>
+
     <path id="aeroeskobing" class="consumepath slow" d="M560 390  L{x} {y}"/>
+    {#if getExport(prod,consum)>0 }
+        <path id="soeby" class="consumepath slow" d="M200 170 L400 400  L{x} {y}"/>
+        <path id="export" class="consumepath slow" d="M0 100 L150 100  L200 170"/>
+        <text x="20" y="90">Eksport {getExport(prod,consum)}kW</text>
+    {:else}
+        <path id="soeby" class="consumepath slow" d="M{x} {y} L400 400 L200 170 "/>
+        <path id="import" class="consumepath slow" d="M200 170 L150 100  L0 100"/>
+        <text x="20" y="90"> Import {-getExport(prod,consum)}kW</text>
+    {/if}
     <path id="marstal" class="consumepath slow" d="M790 530  L{x} {y}"/>
 
     <g transform="translate(190 180) "><Hus/></g>
     <g transform="translate(380 405) "><Hus/></g>
     <g transform="translate(545 390)"><Hus/></g>
     <g transform="translate(790 530)"><Hus/></g>
-    {#if prod !=undefined }
-    <text x="800" y="140" >Prod: {getSum(prod)}</text>
-    {:else}  
-    <text x="800" y="140" >Prod: ----</text>
-    {/if}
-    {#if consum !=undefined }
 
-    <text x="800" y="160" >Forbrug:{Math.round(consum.ConsumptionBolig+consum.ConsumptionErhverv)} </text>
-    {:else}  
-    <text x="800" y="120" >Forbrug: ----</text>
-    {/if}
+    <g transform="translate(100 600)">
+        {#if prod  !=undefined }
+            <g transform="translate(20 0) rotate(45, 0, 0)">
+                <text  x="0" y="20" >Produktion kWt</text>
+            </g>
+            <text x="1" y="{-getSum(prod)/50-1}" >{getSum(prod)}</text>
+            <rect x="0" y="{-getSum(prod)/50}" width="45" height="{getSum(prod)/50}" style="fill:rgb(0,0,255);stroke-width:1;stroke:rgb(0,0,0)" />
+            <rect x="0" y="{-Math.round(prod.orc+prod.sol)/50}" width="45" height="{Math.round(prod.orc+prod.sol)/50}" style="fill:yellow;stroke-width:1;stroke:yellow" />
+            <rect x="0" y="{-Math.round(prod.orc)/50}" width="45" height="{Math.round(prod.orc)/50}" style="fill:rgb(200,0,255);stroke-width:1;stroke:rgb(200,0,255)" />
+        {:else}  
+            <!-- <text x="800" y="140" >Prod: ----</text> -->
+        {/if}
+        {#if consum !=undefined }
+        <g transform="translate(70 0) rotate(45, 0, 0)">
+            <text  x="0" y="20" >Forbrug kWt</text>
+        </g>
+        <text x="51" y="{-Math.round(consum.ConsumptionBolig+consum.ConsumptionErhverv)/50 -1}" >{Math.round(consum.ConsumptionBolig+consum.ConsumptionErhverv)} </text>
+        <rect x="50" y="{-Math.round(consum.ConsumptionBolig+consum.ConsumptionErhverv)/50}"  width="45" height="{Math.round(consum.ConsumptionBolig+consum.ConsumptionErhverv)/50}" style="fill:rgb(0,255,0);stroke-width:1;stroke:rgb(0,0,0)" />
+        <rect x="50" y="{-Math.round(consum.ConsumptionErhverv)/50}"  width="45" height="{Math.round(consum.ConsumptionErhverv)/50}" style="fill:red;stroke-width:1;stroke:red" />
+        {:else}  
+        <!-- <text x="0" y="{-Math.round(consum.ConsumptionBolig+consum.ConsumptionErhverv)/50}" >Forbrug: ----</text> -->
+        {/if}
+    </g>
 </svg>
+
+
+
+
 
 <style>
     .path {
         stroke:green ;
         stroke-width: 5;
         stroke-dasharray: 10;
+        fill: transparent;
     }
     .consumepath {
-        stroke:gray ;
+        stroke:brown ;
         stroke-width: 5;
         stroke-dasharray: 10;
         fill: transparent;
     }
+    .stoped{
+        stroke:gray ;
+    }
     .fast {
         animation: dash 50s linear infinite;
+    }
+    .medium {
+        animation: dash 100s linear infinite;
     }
     .slow {
         animation: dash 300s linear infinite;
