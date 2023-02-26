@@ -1,6 +1,6 @@
 <script lang="ts">
     // import { construct_svelte_component } from "svelte/internal";
-    import type { Production } from "../interfaces/interface";
+    import type { Production,Consumption } from "../interfaces/interface";
     import Hus from "./hus.svelte";
 
     let mode="fast";
@@ -9,7 +9,8 @@
     // let sum = 0;
     
     // export let prod;
-    export let prod:Production;
+    export let prod: Production;
+    export let consum: Consumption;
     function getSum(p:Production):number {
         return Math.round(p.orc+p.sol+p.vind);
     }
@@ -79,10 +80,14 @@
     <g transform="translate(790 530)"><Hus/></g>
     {#if prod !=undefined }
     <text x="800" y="140" >Prod: {getSum(prod)}</text>
-    <text x="800" y="160" >Konsum: </text>
     {:else}  
     <text x="800" y="140" >Prod: ----</text>
-    <text x="800" y="120" >Konsum: ----</text>
+    {/if}
+    {#if consum !=undefined }
+
+    <text x="800" y="160" >Forbrug:{Math.round(consum.ConsumptionBolig+consum.ConsumptionErhverv)} </text>
+    {:else}  
+    <text x="800" y="120" >Forbrug: ----</text>
     {/if}
 </svg>
 

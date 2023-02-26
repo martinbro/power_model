@@ -1,13 +1,16 @@
 <script lang="ts">
 	import VindProd from "./component/VindProd.svelte";
-	import type {Production} from "./interfaces/interface";
+	import type {Production,Consumption} from "./interfaces/interface";
 	
+
 	let ppp: Production;
 	let pro: Production[] =[];
+	let consum:Consumption;
+	let con: Consumption[] =[];
 	let h0 = 0;
 	let d0 = 1;
 	let t=-1;//neg værdi bruges til initiallisering
-	var date0 = new Date(2021, 1, 1, 0, 0, 0);
+	var date0 = new Date(2021, 1, d0, h0, 0, 0);
 		
 	function pad(d) {
     	return (d < 10) ? '0' + d.toString() : d.toString();	
@@ -22,9 +25,6 @@
 		date0.setHours(date0.getHours()+1)
 		h0=date0.getHours(); //ny time
 		d0=date0.getDate();	//evt ny dato
-		// date1.setHours(date1.getHours()+1)
-		// h1=date1.getHours();
-		// d1=date1.getDate();
 		
 		if(t != d0) {//t er global dato - 
 			t= d0;
@@ -32,7 +32,8 @@
 		}else{
 			// production=pro[h0].vind+pro[h0].sol+pro[h0].orc;
 			ppp=pro[h0];
-			console.log(pro[h0]);
+			// console.log(pro[h0]);
+			consum = con[h0];
 			// consumption=-1;
 		}
 
@@ -62,13 +63,51 @@
 		.then(data=> {
 			let sum = 0;
 			let j=0;
-			data.records.forEach(record => {
-				sum += record.ConsumptionkWh;
-				console.log( record,j++);
+			
+			let sumBolig =0;
+			let erhverv =0;
+			let dato ="";
+			data.records.forEach((record,n:number) => {
+				if (n==0 && dato=="") {
+					dato = record.HourDK;//initialisering
+				}
+				if( record.HourDK !=dato){
+					
+					//Vi har ramt en ny dato - og gemmer de agregerede værdier
+					const c:Consumption ={ConsumptionBolig:sumBolig,ConsumptionErhverv:erhverv,HourDK:dato}
+					con[j]={ConsumptionBolig:sumBolig,ConsumptionErhverv:erhverv,HourDK:dato}
+					// con[j].ConsumptionBolig = sumBolig;
+					// con[j].ConsumptionErhverv = erhverv;
+					// con[j].HourDK = dato;
+					// con[j]
+					if (j==0) {
+						consum=c;
+					}
+					//så initialiseres variable og j tælles op
+					// console.log("OPTATERET",j,con[j],sumBolig);
+					
+					sumBolig=0;
+					erhverv = 0;
+					dato = record.HourDK;
+					j++;
+				}
+
+					if (record.HeatingCategory =="Erhverv") {
+						erhverv += record.ConsumptionkWh;
+					} else {
+						sumBolig += record.ConsumptionkWh;
+					}
+				
+				
+				// sum += record.ConsumptionkWh;
+				
+				
 			});
+			const c:Consumption ={ConsumptionBolig:sumBolig,ConsumptionErhverv:erhverv,HourDK:dato}
+			con[j]=c;
 			// consumption = sum;
-			// console.log("******");
-		});
+			// console.log("******",con[j]);
+		})
 
 	
     });
@@ -82,7 +121,7 @@
 	<h1 class="oneline">{pad(d0)}/{date0.getMonth()}-{date0.getFullYear()} {pad(h0)}:00</h1>
 	<button class="oneline" on:click={add}> Næste time </button>
 	<!-- <p>:::::</p> -->
-	<VindProd prod = {ppp}></VindProd>
+	<VindProd prod = {ppp} consum = {consum}></VindProd>
 </main>
 
 <style>
